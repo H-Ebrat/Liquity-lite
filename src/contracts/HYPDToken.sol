@@ -2,22 +2,18 @@
 
 pragma solidity ^0.8.30;
 
-
-
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-
 // /Users/harisebrat/liquity-lite/lib/openzeppelin-contracts/contracts/access/Ownable.sol
 
-contract LUSDTToken is ERC20, Ownable {
-
+contract HYPDToken is ERC20, Ownable {
     // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
 
-    address public troveManager;        // later: authorized minter/burner
-    address public stabilityPool;       // later: authorized burner (optional)
+    address public troveManager; // later: authorized minter/burner
+    address public stabilityPool; // later: authorized burner (optional)
 
     // -----------------------------------------------------------------------
     // Constructor
@@ -36,12 +32,12 @@ contract LUSDTToken is ERC20, Ownable {
     // -----------------------------------------------------------------------
 
     function setTroveManager(address _troveManager) external onlyOwner {
-        require(_troveManager != address(0), "LUSDT: zero troveManager");
+        require(_troveManager != address(0), "HYPD: zero troveManager");
         troveManager = _troveManager;
     }
 
     function setStabilityPool(address _stabilityPool) external onlyOwner {
-        require(_stabilityPool != address(0), "LUSDT: zero stabilityPool");
+        require(_stabilityPool != address(0), "HYPD: zero stabilityPool");
         stabilityPool = _stabilityPool;
     }
 
@@ -65,9 +61,7 @@ contract LUSDTToken is ERC20, Ownable {
 
     function _requireCallerIsAuthorized() internal view {
         require(
-            msg.sender == owner() ||
-            msg.sender == troveManager ||
-            msg.sender == stabilityPool,
+            msg.sender == owner() || msg.sender == troveManager || msg.sender == stabilityPool,
             "LUSDT: caller not authorized"
         );
     }

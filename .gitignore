@@ -12,3 +12,6 @@ docs/
 
 # Dotenv file
 .env
+
+# ignore the skill.md
+skill.md
