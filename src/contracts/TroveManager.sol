@@ -21,7 +21,7 @@ import {IHYPDToken} from "../Interfaces/IHYPDToken.sol";
  *      Later versions can add more complex features and optimizations.
  */
 
-abstract contract TroveManager is ITroveManager {
+contract TroveManager is ITroveManager {
     //state vars
 
     mapping(address => Trove) public troves;
@@ -69,12 +69,41 @@ abstract contract TroveManager is ITroveManager {
         totalCollateral += msg.value;
         totalDebt += _debtAmount;
 
-        // Mint _debtAmount HYPD to borrower
+        // Mint _debtAmount HYPD to borrower 
         IHYPDToken(hypdToken).mint(msg.sender, _debtAmount);
 
         emit TroveOpened(msg.sender, msg.value, _debtAmount);
+
     }
 
+
+
+    function closeTrove() external {
+
+        // Checks
+        Trove storage trove = troves[msg.sender];
+        require(trove.debt > 0, "No active trove");
+
+        // Apply pending rewards
+        _applyPendingRewards(msg.sender);
+
+        uint256 collateral = trove.collateral;
+        uint256 debt = trove.debt;
+
+        require(IHYPDToken(hypdToken).balanceOf(msg.sender) >= debt, "Insufficient HYPD balance");
+
+        // Effects — update all state before external calls
+        totalCollateral -= collateral;
+        totalDebt -= debt;
+        delete troves[msg.sender];
+
+        // Interactions 
+        IHYPDToken(hypdToken).burn(msg.sender, debt);
+        (bool success, ) = payable(msg.sender).call{value: collateral}("");
+        require(success, "ETH transfer failed");
+
+        emit TroveClosed(msg.sender);
+    }
 
     // -----------------------------------------------------------------------
     // Internal functions
@@ -87,6 +116,30 @@ abstract contract TroveManager is ITroveManager {
     }
 
 
-    // 
+    function _applyPendingRewards(address _borrower) internal {}
+
+    // -----------------------------------------------------------------------
+    // Stubs — not yet implemented
+    // -----------------------------------------------------------------------
+
+    function addCollateral() external payable {}
+    function removeCollateral(uint256 _amount) external {}
+    function borrowHYPD(uint256 _amount) external {}
+    function repayHYPD(uint256 _amount) external {}
+    function liquidate(address _borrower) external {}
+
+    function getPendingCollateralReward(address _borrower) external view returns (uint256) { return 0; }
+    function getPendingDebtReward(address _borrower) external view returns (uint256) { return 0; }
+
+    function getTrove(address _borrower) external view returns (uint256 collateral, uint256 debt) {
+        return (troves[_borrower].collateral, troves[_borrower].debt);
+    }
+
+    function getCollateralizationRatio(address _borrower) external view returns (uint256) {
+        Trove storage trove = troves[_borrower];
+        if (trove.debt == 0) return type(uint256).max;
+        uint256 price = IPriceFeed(priceFeed).lastGoodPrice();
+        return _computeCR(trove.collateral, trove.debt, price);
+    }
 
 }
