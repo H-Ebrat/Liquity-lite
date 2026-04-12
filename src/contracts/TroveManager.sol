@@ -100,7 +100,7 @@ contract TroveManager is ITroveManager {
         // Interactions 
         IHYPDToken(hypdToken).burn(msg.sender, debt);
         (bool success, ) = payable(msg.sender).call{value: collateral}("");
-        require(success, "ETH transfer failed");
+        require(success, "HYPE transfer failed");
 
         emit TroveClosed(msg.sender);
     }
